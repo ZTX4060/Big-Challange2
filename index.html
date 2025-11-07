@@ -128,6 +128,35 @@
             </section>
         </main>
 
+                <script>
+                // Image source fallback: if an image in ./Images/ fails, try same-folder; if a same-folder path fails, try ./Images/.
+                (function() {
+                    function tryAlternate(img, triedFlag) {
+                        if (img.dataset.fallbackDone) return; // avoid infinite loops
+                        var src = img.getAttribute('src');
+                        if (!src) return;
+                        var isImagesPath = /\/Images\//.test(src);
+                        var altSrc = isImagesPath ? src.replace(/\.\/Images\//, './') : ('./Images/' + src.replace(/^\.\//, ''));
+                        if (altSrc === src) return;
+                        img.dataset.fallbackDone = '1';
+                        img.setAttribute('src', altSrc);
+                    }
+                    document.addEventListener('error', function(e) {
+                        var t = e.target;
+                        if (t && t.tagName === 'IMG') {
+                            tryAlternate(t);
+                        }
+                    }, true);
+                    // Optional proactive check for already broken images (cached 404s)
+                    window.addEventListener('load', function() {
+                        document.querySelectorAll('img').forEach(function(img) {
+                            if (!img.complete || img.naturalWidth) return; // naturalWidth 0 -> broken
+                            tryAlternate(img);
+                        });
+                    });
+                })();
+                </script>
+
         <!-- Footer -->
         <footer class="footer" role="contentinfo">
             <div class="container">
